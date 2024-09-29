@@ -1,0 +1,50 @@
+CREATE TABLE machine (
+    machine_id INT PRIMARY KEY,  
+    machine_name VARCHAR(255) NOT NULL, 
+    tool_capacity INT NOT NULL  
+);
+
+
+CREATE TABLE tool (
+    tool_id SERIAL PRIMARY KEY,  
+    machine_id INT REFERENCES machine(machine_id) ON DELETE CASCADE,  
+    tool_offset FLOAT NOT NULL,  
+    feedrate FLOAT NOT NULL,  
+    update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
+
+CREATE TABLE tool_usage (
+    usage_id SERIAL PRIMARY KEY,
+    machine_id INT REFERENCES machine(machine_id) ON DELETE CASCADE,
+    tool_in_use INT NOT NULL,
+    update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE axis (
+    axis_id SERIAL PRIMARY KEY, 
+    machine_id INT REFERENCES machine(machine_id) ON DELETE CASCADE,  
+    axis_name VARCHAR(255) NOT NULL CHECK (axis_name IN ('X', 'Y', 'Z', 'A', 'C')),
+    max_acceleration DECIMAL(10, 3) NOT NULL,
+    max_velocity DECIMAL(10, 3) NOT NULL,
+    UNIQUE (machine_id, axis_name) 
+);
+
+
+CREATE TABLE axis_data (
+    axis_data_id SERIAL PRIMARY KEY,  
+    axis_id INT REFERENCES axis(axis_id) ON DELETE CASCADE,  
+    actual_position DECIMAL(10, 3) NOT NULL, 
+    target_position DECIMAL(10, 3) NOT NULL,  
+    distance_to_go DECIMAL(10, 3) GENERATED ALWAYS AS (target_position - actual_position) STORED,
+    homed BOOLEAN NOT NULL,  
+    acceleration DECIMAL(10, 3) NOT NULL, 
+    velocity DECIMAL(10, 3) NOT NULL, 
+    update_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP  
+);
+
+
+CREATE INDEX idx_axis_machine_id ON axis (machine_id);
+CREATE INDEX idx_axis_data_axis_id ON axis_data (axis_id);
+
+
